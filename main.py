@@ -1,3 +1,4 @@
+import os
 from functools import wraps
 from flask import Flask, render_template, redirect, url_for, flash, g, request, abort
 from flask_bootstrap import Bootstrap
@@ -9,15 +10,16 @@ from sqlalchemy.orm import relationship
 from flask_login import UserMixin, login_user, LoginManager, login_required, current_user, logout_user
 from forms import CreatePostForm, RegisterForm, LoginForm, CommentForm
 from flask_gravatar import Gravatar
+from notification_manager import NotificationManager
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = '8BYkEfBA6O6donzWlSihBXox7C0sKR6b'
+app.config['SECRET_KEY'] = os.environ.get("SECRET_KEY")
 ckeditor = CKEditor(app)
 Bootstrap(app)
 
 # CONNECT TO DB
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///blog.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("SQLALCHEMY_DATABASE_URI")
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = os.environ.get("SQLALCHEMY_TRACK_MODIFICATIONS") in ("True", "1")
 db = SQLAlchemy(app)
 
 # CONFIGURE FLASK LOGIN
@@ -188,8 +190,19 @@ def about():
     return render_template("about.html")
 
 
-@app.route("/contact")
+@app.route("/contact", methods=["GET", "POST"])
 def contact():
+    if request.method == "POST":
+        data = {
+            "name": request.form["name"],
+            "email": request.form["email"],
+            "phone": request.form["phone"],
+            "message": request.form["message"]
+        }
+
+        notification_manager = NotificationManager()
+        notification_manager.send_email(data["name"], data["email"], data["phone"], data["message"])
+        return render_template("contact.html", message="Successfully sent your message.")
     return render_template("contact.html")
 
 
