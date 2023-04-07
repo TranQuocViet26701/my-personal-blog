@@ -18,7 +18,7 @@ ckeditor = CKEditor(app)
 Bootstrap(app)
 
 # CONNECT TO DB
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("SQLALCHEMY_DATABASE_URI")
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("SQLALCHEMY_DATABASE_URI", "sqlite:///blog.db")
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = os.environ.get("SQLALCHEMY_TRACK_MODIFICATIONS") in ("True", "1")
 db = SQLAlchemy(app)
 
@@ -79,10 +79,6 @@ class Comment(db.Model):
     post_id = db.Column(db.Integer, db.ForeignKey('blog_posts.id'))
     # Create reference to the User object, the "posts" refers to the posts protperty in the User class.
     parent_post = relationship("BlogPost", back_populates="comments")
-
-
-with app.app_context():
-    db.create_all()
 
 
 # CONFIGURE GRAVATAR
